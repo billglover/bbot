@@ -20,11 +20,16 @@ frameworkVersion: ">=1.28.0 <2.0.0"
 
 provider:
   name: aws
+  stackName: bbot
+  apiName: bbot
   runtime: go1.x
-
-# you can overwrite defaults here
-#  stage: dev
-#  region: us-east-1
+  memorySize: 128
+  stage: dev
+  region: eu-west-1
+  stackTags:
+    project: bbot
+  tags:
+    project: bbot
 
 # you can add statements to the Lambda function's IAM Role here
 #  iamRoleStatements:
@@ -53,7 +58,7 @@ package:
    - ./bin/**
 
 functions:
-  hello:
+  acceptRequest:
     handler: bin/acceptRequest
     events:
       - http:
