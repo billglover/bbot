@@ -1,21 +1,4 @@
-# Welcome to Serverless!
-#
-# This file is the main config file for your service.
-# It's very minimal at this point and uses default values.
-# You can always add more config options for more control.
-# We've included some commented out config examples here.
-# Just uncomment any of them to get that config option.
-#
-# For full config options, check the docs:
-#    docs.serverless.com
-#
-# Happy Coding!
-
-service: bbot # NOTE: update this with your service name
-
-# You can pin your service to only deploy with a specific Serverless version
-# Check out our docs for more details
-# frameworkVersion: "=X.X.X"
+service: bbot
 frameworkVersion: ">=1.28.0 <2.0.0"
 
 provider:
@@ -62,8 +45,16 @@ functions:
     handler: bin/acceptRequest
     events:
       - http:
-          path: hello
+          path: webhook
           method: post
+  flagMessage:
+    handler: bin/flagMessage
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt:
+              - flagMessageQueue
+              - Arn
 
 #    The following are a few example events you can configure
 #    NOTE: Please make sure to change your handler code to work with those events
@@ -99,13 +90,16 @@ functions:
 #    environment:
 #      variable2: value2
 
-# you can add CloudFormation resource templates here
-#resources:
-#  Resources:
-#    NewResource:
-#      Type: AWS::S3::Bucket
-#      Properties:
-#        BucketName: my-new-bucket
+resources:
+  Resources:
+    flagMessageQueue:
+      Type: "AWS::SQS::Queue"
+      Properties:
+        QueueName: "bbot-flagMessageQueue"
+        Tags:
+          - Key: "project"
+            Value: "bbot"
+
 #  Outputs:
 #     NewOutput:
 #       Description: "Description for the output"

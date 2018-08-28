@@ -8,3 +8,6 @@
   - `acceptRequest` - to handle all inbound web-hook requests from Slack
   - `flagMessage` - to handle flagged messages appropriately
 - Modify `Makefile` and `serverless.yml` to point to our new functions
+- Create `flagMessageQueue` and use as the event source for `flagMessage`
+- Test we can call the HTTP endpoint for `acceptRequest`
+- Test we can place messages on `flagMessageQueue`
