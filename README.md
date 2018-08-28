@@ -11,3 +11,5 @@
 - Create `flagMessageQueue` and use as the event source for `flagMessage`
 - Test we can call the HTTP endpoint for `acceptRequest`
 - Test we can place messages on `flagMessageQueue`
+- Store secrets in parameter store
+- Demonstrate we can read secrets from within Lambda functions
