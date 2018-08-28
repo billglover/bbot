@@ -3,3 +3,6 @@
 
 # golang output binary directory
 bin
+
+# secrets
+ssm.sh
