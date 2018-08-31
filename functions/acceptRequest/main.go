@@ -1,10 +1,12 @@
 package main
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
+	"net/http"
 	"os"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -22,34 +24,53 @@ var slackSigningSecret string
 // Response is of type APIGatewayProxyResponse
 type Response events.APIGatewayProxyResponse
 
+// Request is of type APIGatewayProxyRequest
+type Request events.APIGatewayProxyRequest
+
 // Handler is our lambda handler invoked by the `lambda.Start` function call
-func Handler(ctx context.Context) (Response, error) {
+func handler(ctx context.Context, req Request) (Response, error) {
 
-	fmt.Println("slackClientID:", slackClientID[:4])
-	fmt.Println("slackClientSecret:", slackClientSecret[:4])
-	fmt.Println("slackSigningSecret:", slackSigningSecret[:4])
-
-	var buf bytes.Buffer
-
-	body, err := json.Marshal(map[string]interface{}{
-		"message": "Go Serverless v1.0! Your function executed successfully!",
-	})
-	if err != nil {
-		return Response{StatusCode: 404}, err
-	}
-	json.HTMLEscape(&buf, body)
-
-	resp := Response{
-		StatusCode:      200,
-		IsBase64Encoded: false,
-		Body:            buf.String(),
-		Headers: map[string]string{
-			"Content-Type":           "application/json",
-			"X-MyCompany-Func-Reply": "acceptRequest-handler",
-		},
+	if validateRequest(req, slackClientSecret) == false {
+		resp := Response{StatusCode: http.StatusBadRequest}
+		return resp, nil
 	}
 
+	resp := Response{StatusCode: http.StatusAccepted}
 	return resp, nil
+}
+
+func validateRequest(req Request, secret string) bool {
+	if req.HTTPMethod != http.MethodPost {
+		return false
+	}
+
+	ts, ok := req.Headers["X-Slack-Request-Timestamp"]
+	if ok == false {
+		return false
+	}
+
+	sig, ok := req.Headers["X-Slack-Signature"]
+	if ok == false {
+		return false
+	}
+
+	if checkHMAC(req.Body, ts, sig, secret) == false {
+		return false
+	}
+
+	return true
+}
+
+// CheckHMAC reports whether msgHMAC is a valid HMAC tag for msg.
+func checkHMAC(body, timestamp, msgHMAC, key string) bool {
+	msgHMAC = msgHMAC[3:]
+	msg := "v0:" + timestamp + ":" + body
+	hash := hmac.New(sha256.New, []byte(key))
+	hash.Write([]byte(msg))
+
+	expectedKey := hash.Sum(nil)
+	actualKey, _ := hex.DecodeString(msgHMAC)
+	return hmac.Equal(expectedKey, actualKey)
 }
 
 func main() {
@@ -67,7 +88,7 @@ func main() {
 	slackClientSecret = secrets["/bbot/env/SLACK_CLIENT_SECRET"]
 	slackSigningSecret = secrets["/bbot/env/SLACK_SIGNING_SECRET"]
 
-	lambda.Start(Handler)
+	lambda.Start(handler)
 }
 
 func getSecrets(keys []string) (map[string]string, error) {
