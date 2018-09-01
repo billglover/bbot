@@ -7,11 +7,8 @@ import (
 	"os"
 
 	"github.com/aws/aws-lambda-go/lambda"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/ssm"
+	ss "github.com/billglover/bbot/secrets"
 	bot "github.com/billglover/bbot/slackbot"
-	"github.com/pkg/errors"
 )
 
 var slackClientID string
@@ -21,17 +18,18 @@ var slackSigningSecret string
 // Handler is our lambda handler invoked by the `lambda.Start` function call
 func handler(ctx context.Context, req bot.Request) (bot.Response, error) {
 
-	if bot.ValidateRequest(req, slackClientSecret) == false {
-		resp := bot.Response{StatusCode: http.StatusBadRequest}
-		return resp, nil
+	if bot.ValidateRequest(req, slackSigningSecret) == false {
+		return bot.ErrorResponse("invalid request, check request signature", http.StatusBadRequest)
 	}
 
-	resp := bot.Response{StatusCode: http.StatusAccepted}
+	resp := bot.Response{
+		StatusCode: http.StatusAccepted,
+		Headers:    map[string]string{"Content-Type": "application/json"}}
 	return resp, nil
 }
 
 func main() {
-	secrets, err := getSecrets([]string{
+	secrets, err := ss.GetSecrets([]string{
 		"/bbot/env/SLACK_CLIENT_ID",
 		"/bbot/env/SLACK_CLIENT_SECRET",
 		"/bbot/env/SLACK_SIGNING_SECRET",
@@ -47,4 +45,3 @@ func main() {
 
 	lambda.Start(handler)
 }
-
