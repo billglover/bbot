@@ -22,6 +22,9 @@ func handler(ctx context.Context, req bot.Request) (bot.Response, error) {
 		return bot.ErrorResponse("invalid request, check request signature", http.StatusBadRequest)
 	}
 
+	fmt.Println("Path:", req.Path)
+	fmt.Println("Body:", req.Body)
+
 	resp := bot.Response{
 		StatusCode: http.StatusAccepted,
 		Headers:    map[string]string{"Content-Type": "application/json"}}
