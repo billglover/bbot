@@ -2,18 +2,15 @@ package main
 
 import (
 	"context"
-	"crypto/hmac"
-	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
 	"net/http"
 	"os"
 
-	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ssm"
+	bot "github.com/billglover/bbot/slackbot"
 	"github.com/pkg/errors"
 )
 
@@ -21,56 +18,16 @@ var slackClientID string
 var slackClientSecret string
 var slackSigningSecret string
 
-// Response is of type APIGatewayProxyResponse
-type Response events.APIGatewayProxyResponse
-
-// Request is of type APIGatewayProxyRequest
-type Request events.APIGatewayProxyRequest
-
 // Handler is our lambda handler invoked by the `lambda.Start` function call
-func handler(ctx context.Context, req Request) (Response, error) {
+func handler(ctx context.Context, req bot.Request) (bot.Response, error) {
 
-	if validateRequest(req, slackClientSecret) == false {
-		resp := Response{StatusCode: http.StatusBadRequest}
+	if bot.ValidateRequest(req, slackClientSecret) == false {
+		resp := bot.Response{StatusCode: http.StatusBadRequest}
 		return resp, nil
 	}
 
-	resp := Response{StatusCode: http.StatusAccepted}
+	resp := bot.Response{StatusCode: http.StatusAccepted}
 	return resp, nil
-}
-
-func validateRequest(req Request, secret string) bool {
-	if req.HTTPMethod != http.MethodPost {
-		return false
-	}
-
-	ts, ok := req.Headers["X-Slack-Request-Timestamp"]
-	if ok == false {
-		return false
-	}
-
-	sig, ok := req.Headers["X-Slack-Signature"]
-	if ok == false {
-		return false
-	}
-
-	if checkHMAC(req.Body, ts, sig, secret) == false {
-		return false
-	}
-
-	return true
-}
-
-// CheckHMAC reports whether msgHMAC is a valid HMAC tag for msg.
-func checkHMAC(body, timestamp, msgHMAC, key string) bool {
-	msgHMAC = msgHMAC[3:]
-	msg := "v0:" + timestamp + ":" + body
-	hash := hmac.New(sha256.New, []byte(key))
-	hash.Write([]byte(msg))
-
-	expectedKey := hash.Sum(nil)
-	actualKey, _ := hex.DecodeString(msgHMAC)
-	return hmac.Equal(expectedKey, actualKey)
 }
 
 func main() {
