@@ -13,3 +13,6 @@
 - Test we can place messages on `flagMessageQueue`
 - Store secrets in parameter store
 - Demonstrate we can read secrets from within Lambda functions
+- Validate inbound message signature on all messages
+- Add tests for functions to aid local development
+- Log request path and body for debugging
