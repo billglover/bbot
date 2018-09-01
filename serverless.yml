@@ -39,7 +39,10 @@ functions:
     handler: bin/acceptRequest
     events:
       - http:
-          path: webhook
+          path: action
+          method: post
+      - http:
+          path: command
           method: post
 
   flagMessage:
