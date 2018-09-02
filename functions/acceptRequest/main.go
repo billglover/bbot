@@ -22,8 +22,19 @@ func handler(ctx context.Context, req bot.Request) (bot.Response, error) {
 		return bot.ErrorResponse("invalid request, check request signature", http.StatusBadRequest)
 	}
 
-	fmt.Println("Path:", req.Path)
+	fmt.Println("PathParameters:", req.PathParameters)
 	fmt.Println("Body:", req.Body)
+
+	switch req.PathParameters["type"] {
+	case "event":
+		fmt.Println("event request")
+	case "command":
+		fmt.Println("command request")
+	case "action":
+		fmt.Println("action request")
+	default:
+		return bot.ErrorResponse("invalid request, check endpoint type", http.StatusNotFound)
+	}
 
 	resp := bot.Response{
 		StatusCode: http.StatusAccepted,
