@@ -39,11 +39,12 @@ functions:
     handler: bin/acceptRequest
     events:
       - http:
-          path: action
+          path: endpoint/{type}
           method: post
-      - http:
-          path: command
-          method: post
+          request:
+            parameters:
+              paths:
+                type: true
 
   flagMessage:
     handler: bin/flagMessage
