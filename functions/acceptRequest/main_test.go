@@ -15,9 +15,9 @@ var tcs = []struct {
 	Response bot.Response
 }{
 	{
-		Name: "valid request signature",
+		Name: "valid event request signature",
 		Request: bot.Request{
-			PathParameters: map[string]string{"type": "action"},
+			PathParameters: map[string]string{"type": "event"},
 			Body:           "token=xyzz0WbapA4vBCDEFasx0q6G&team_id=T1DC2JH3J&team_domain=testteamnow&channel_id=G8PSS9T3V&channel_name=foobar&user_id=U2CERLKJA&user_name=roadrunner&command=%2Fwebhook-collect&text=&response_url=https%3A%2F%2Fhooks.slack.com%2Fcommands%2FT1DC2JH3J%2F397700885554%2F96rGlfmibIGlgcZRskXaIFfN&trigger_id=398738663015.47445629121.803a0bc887a14d10d2c447fce8b6703c",
 			HTTPMethod:     http.MethodPost,
 			Headers: map[string]string{

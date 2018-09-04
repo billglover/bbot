@@ -17,3 +17,5 @@
 - Add tests for functions to aid local development
 - Log request path and body for debugging
 - Use path parameters to identify the endpoint type e.g. `/endpoint/action`, `/endpoint/command`
+- Create custom structs to represent the message action
+- Parse the message action and log it if successful
