@@ -22,16 +22,22 @@ func handler(ctx context.Context, req bot.Request) (bot.Response, error) {
 		return bot.ErrorResponse("invalid request, check request signature", http.StatusBadRequest)
 	}
 
-	fmt.Println("PathParameters:", req.PathParameters)
-	fmt.Println("Body:", req.Body)
-
 	switch req.PathParameters["type"] {
+
 	case "event":
 		fmt.Println("event request")
+
 	case "command":
 		fmt.Println("command request")
+
 	case "action":
 		fmt.Println("action request")
+		err := handleAction(ctx, req)
+		if err != nil {
+			fmt.Println("WARN:", err)
+			bot.ErrorResponse("unable to handle message action", http.StatusBadRequest)
+		}
+
 	default:
 		return bot.ErrorResponse("invalid request, check endpoint type", http.StatusNotFound)
 	}
@@ -40,6 +46,15 @@ func handler(ctx context.Context, req bot.Request) (bot.Response, error) {
 		StatusCode: http.StatusAccepted,
 		Headers:    map[string]string{"Content-Type": "application/json"}}
 	return resp, nil
+}
+
+func handleAction(ctx context.Context, req bot.Request) error {
+	ma, err := bot.ParseAction(req.Body)
+	if err != nil {
+		return err
+	}
+	fmt.Println(ma)
+	return nil
 }
 
 func main() {
