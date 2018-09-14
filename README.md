@@ -19,3 +19,6 @@
 - Use path parameters to identify the endpoint type e.g. `/endpoint/action`, `/endpoint/command`
 - Create custom structs to represent the message action
 - Parse the message action and log it if successful
+- Present the flagMessageQueue as an environment variable
+- Place a dummy message on the flagMessageQueue
+- Add permissions to allow function to send messages on SQS queue

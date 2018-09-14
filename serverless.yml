@@ -26,6 +26,14 @@ provider:
             - "Ref" : "AWS::Region"
             - "Ref" : "AWS::AccountId"
             - "parameter/bbot/*"
+    - Effect: "Allow"
+      Action:
+        - sqs:SendMessage
+      Resource:
+        Fn::GetAtt:
+          - flagMessageQueue
+          - Arn
+        
 
 package:
   exclude:
@@ -45,6 +53,9 @@ functions:
             parameters:
               paths:
                 type: true
+    environment:
+      SQS_QUEUE_FLAGMESSAGE:
+        Ref: flagMessageQueue
 
   flagMessage:
     handler: bin/flagMessage

@@ -73,6 +73,7 @@ func TestHandler(t *testing.T) {
 	for _, tc := range tcs {
 		t.Run(tc.Name, func(t *testing.T) {
 			ctx := context.Background()
+			handler := requestHandler(nil, "")
 			resp, err := handler(ctx, tc.Request)
 
 			if err != nil {
