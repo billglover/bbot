@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
@@ -30,16 +31,17 @@ func requestHandler(q *sqs.SQS, qName string) handler {
 
 		case "event":
 			fmt.Println("event request")
+			return bot.ErrorResponse("events API not yet implemented", http.StatusNotImplemented)
 
 		case "command":
 			fmt.Println("command request")
+			return bot.ErrorResponse("command API not yet implemented", http.StatusNotImplemented)
 
 		case "action":
-			fmt.Println("action request")
-			err := handleAction(ctx, req, q, qName)
+			err := sendAction(ctx, req, q, qName)
 			if err != nil {
 				fmt.Println("WARN:", err)
-				bot.ErrorResponse("unable to handle message action", http.StatusBadRequest)
+				return bot.ErrorResponse("unable to enqueue action for procesing", http.StatusBadRequest)
 			}
 
 		default:
@@ -54,27 +56,43 @@ func requestHandler(q *sqs.SQS, qName string) handler {
 	return handlerFunc
 }
 
-func handleAction(ctx context.Context, req bot.Request, q *sqs.SQS, qName string) error {
-	ma, err := bot.ParseAction(req.Body)
+func sendAction(ctx context.Context, req bot.Request, q *sqs.SQS, qName string) error {
+	messageAction, err := bot.ParseAction(req.Body)
 	if err != nil {
 		return err
 	}
-	fmt.Println(ma)
+
+	body, err := json.Marshal(messageAction)
+	if err != nil {
+		return err
+	}
 
 	delay := aws.Int64(0)
-	msgmap := make(map[string]*sqs.MessageAttributeValue)
-	body := aws.String("Test Message Body")
+	attributes := make(map[string]*sqs.MessageAttributeValue)
 
-	msgmap["Type"] = &sqs.MessageAttributeValue{
+	attributes["Action"] = &sqs.MessageAttributeValue{
 		DataType:    aws.String("String"),
-		StringValue: aws.String(ma.CallbackID),
+		StringValue: aws.String(messageAction.CallbackID),
 	}
 
-	res, err := q.SendMessage(&sqs.SendMessageInput{DelaySeconds: delay, MessageAttributes: msgmap, MessageBody: body, QueueUrl: &qName})
+	attributes["Team"] = &sqs.MessageAttributeValue{
+		DataType:    aws.String("String"),
+		StringValue: aws.String(messageAction.Team.ID),
+	}
+
+	msgInput := &sqs.SendMessageInput{
+		DelaySeconds:      delay,
+		MessageAttributes: attributes,
+		MessageBody:       aws.String(string(body)),
+		QueueUrl:          &qName,
+	}
+
+	resp, err := q.SendMessage(msgInput)
 	if err != nil {
 		return err
 	}
-	fmt.Println("Success", *res.MessageId)
+
+	fmt.Println("INFO: enqueued action with ID", resp.MessageId)
 
 	return nil
 }
