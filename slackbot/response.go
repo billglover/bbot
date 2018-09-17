@@ -2,6 +2,7 @@ package slackbot
 
 import (
 	"encoding/json"
+	"net/http"
 	"strconv"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -24,6 +25,25 @@ func ErrorResponse(msg string, status int) (Response, error) {
 	resp := Response{
 		Body:       string(body),
 		StatusCode: status,
+		Headers:    map[string]string{"Content-Type": "application/json"},
+	}
+	return resp, nil
+}
+
+// SuccessResponse takes a string and generates an appropriate Response.
+func SuccessResponse(msg string) (Response, error) {
+	p := struct {
+		Status  string `json:"status"`
+		Message string `json:"message"`
+	}{
+		Status:  strconv.Itoa(http.StatusAccepted),
+		Message: msg,
+	}
+
+	body, _ := json.Marshal(p)
+	resp := Response{
+		Body:       string(body),
+		StatusCode: http.StatusAccepted,
 		Headers:    map[string]string{"Content-Type": "application/json"},
 	}
 	return resp, nil

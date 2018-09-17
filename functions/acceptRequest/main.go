@@ -2,15 +2,13 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
 
 	"github.com/aws/aws-lambda-go/lambda"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/sqs"
+
+	"github.com/billglover/bbot/queue"
 	ss "github.com/billglover/bbot/secrets"
 	bot "github.com/billglover/bbot/slackbot"
 )
@@ -21,7 +19,7 @@ var slackSigningSecret string
 
 type handler func(ctx context.Context, req bot.Request) (bot.Response, error)
 
-func requestHandler(q *sqs.SQS, qName string) handler {
+func requestHandler(q queue.Queuer) handler {
 	handlerFunc := func(ctx context.Context, req bot.Request) (bot.Response, error) {
 		if bot.ValidateRequest(req, slackSigningSecret) == false {
 			return bot.ErrorResponse("invalid request, check request signature", http.StatusBadRequest)
@@ -30,71 +28,49 @@ func requestHandler(q *sqs.SQS, qName string) handler {
 		switch req.PathParameters["type"] {
 
 		case "event":
-			fmt.Println("event request")
-			return bot.ErrorResponse("events API not yet implemented", http.StatusNotImplemented)
+			return handleEvent(ctx, req, q)
 
 		case "command":
-			fmt.Println("command request")
-			return bot.ErrorResponse("command API not yet implemented", http.StatusNotImplemented)
+			return handleCommand(ctx, req, q)
 
 		case "action":
-			err := sendAction(ctx, req, q, qName)
-			if err != nil {
-				fmt.Println("WARN:", err)
-				return bot.ErrorResponse("unable to enqueue action for procesing", http.StatusBadRequest)
-			}
+			return handleAction(ctx, req, q)
 
 		default:
 			return bot.ErrorResponse("invalid request, check endpoint type", http.StatusNotFound)
 		}
-
-		resp := bot.Response{
-			StatusCode: http.StatusAccepted,
-			Headers:    map[string]string{"Content-Type": "application/json"}}
-		return resp, nil
 	}
+	
 	return handlerFunc
 }
 
-func sendAction(ctx context.Context, req bot.Request, q *sqs.SQS, qName string) error {
-	messageAction, err := bot.ParseAction(req.Body)
+func handleEvent(ctx context.Context, req bot.Request, q queue.Queuer) (bot.Response, error) {
+	return bot.ErrorResponse("events API not yet implemented", http.StatusNotImplemented)
+}
+
+func handleCommand(ctx context.Context, req bot.Request, q queue.Queuer) (bot.Response, error) {
+	return bot.ErrorResponse("command API not yet implemented", http.StatusNotImplemented)
+}
+
+func handleAction(ctx context.Context, req bot.Request, q queue.Queuer) (bot.Response, error) {
+	action, err := bot.ParseAction(req.Body)
 	if err != nil {
-		return err
+		fmt.Println("WARN:", err)
+		return bot.ErrorResponse("unable to parse action", http.StatusBadRequest)
 	}
 
-	body, err := json.Marshal(messageAction)
+	h := queue.Headers{
+		"Team":   action.Team.ID,
+		"Action": action.CallbackID,
+	}
+
+	err = q.Queue(h, action)
 	if err != nil {
-		return err
+		fmt.Println("ERROR:", err)
+		return bot.ErrorResponse("unable to queue action for further processing", http.StatusInternalServerError)
 	}
 
-	delay := aws.Int64(0)
-	attributes := make(map[string]*sqs.MessageAttributeValue)
-
-	attributes["Action"] = &sqs.MessageAttributeValue{
-		DataType:    aws.String("String"),
-		StringValue: aws.String(messageAction.CallbackID),
-	}
-
-	attributes["Team"] = &sqs.MessageAttributeValue{
-		DataType:    aws.String("String"),
-		StringValue: aws.String(messageAction.Team.ID),
-	}
-
-	msgInput := &sqs.SendMessageInput{
-		DelaySeconds:      delay,
-		MessageAttributes: attributes,
-		MessageBody:       aws.String(string(body)),
-		QueueUrl:          &qName,
-	}
-
-	resp, err := q.SendMessage(msgInput)
-	if err != nil {
-		return err
-	}
-
-	fmt.Println("INFO: enqueued action with ID", resp.MessageId)
-
-	return nil
+	return bot.SuccessResponse("")
 }
 
 func main() {
@@ -121,8 +97,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	sess := session.Must(session.NewSessionWithOptions(session.Options{SharedConfigState: session.SharedConfigEnable}))
-	qSvc := sqs.New(sess)
+	// establish the outbound queue
+	q, err := queue.NewSQSQueue(qName)
+	if err != nil {
+		fmt.Println("ERROR: unable to establish queue")
+		os.Exit(1)
+	}
 
-	lambda.Start(requestHandler(qSvc, qName))
+	lambda.Start(requestHandler(q))
 }
