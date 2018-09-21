@@ -1,4 +1,4 @@
-package slackbot
+package routing
 
 import (
 	"crypto/hmac"
@@ -19,7 +19,7 @@ type Request events.APIGatewayProxyRequest
 // and result in the signature being returned as invalid.
 //
 // https://api.slack.com/docs/verifying-requests-from-slack
-func ValidateRequest(req Request, secret string) bool {
+func validateRequest(req Request, secret string) bool {
 	if req.HTTPMethod != http.MethodPost {
 		return false
 	}

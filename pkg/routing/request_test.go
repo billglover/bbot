@@ -1,4 +1,4 @@
-package slackbot
+package routing
 
 import (
 	"net/http"
@@ -27,7 +27,7 @@ func validateReqSuccess(t *testing.T) {
 			"X-Slack-Signature":         "v0=a2114d57b48eac39b9ad189dd8316235a7b4a8d21a10bd27519666489c69b503"},
 	}
 
-	valid := ValidateRequest(req, secret)
+	valid := validateRequest(req, secret)
 	if valid == false {
 		t.Fail()
 	}
@@ -45,7 +45,7 @@ func validateReqInvalidSig(t *testing.T) {
 			"X-Slack-Signature":         "v0=a2114d57b48eac39b9ad189dd8316235a7b4a8d21a10bd27519666489c69b403"},
 	}
 
-	valid := ValidateRequest(req, secret)
+	valid := validateRequest(req, secret)
 	if valid == true {
 		t.Fail()
 	}
@@ -63,7 +63,7 @@ func validateReqInvalidMethod(t *testing.T) {
 			"X-Slack-Signature":         "v0=a2114d57b48eac39b9ad189dd8316235a7b4a8d21a10bd27519666489c69b503"},
 	}
 
-	valid := ValidateRequest(req, secret)
+	valid := validateRequest(req, secret)
 	if valid == true {
 		t.Fail()
 	}
@@ -81,7 +81,7 @@ func validateReqInvalidTimestamp(t *testing.T) {
 			"X-Slack-Signature":         "v0=a2114d57b48eac39b9ad189dd8316235a7b4a8d21a10bd27519666489c69b503"},
 	}
 
-	valid := ValidateRequest(req, secret)
+	valid := validateRequest(req, secret)
 	if valid == true {
 		t.Fail()
 	}

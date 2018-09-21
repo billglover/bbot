@@ -1,4 +1,4 @@
-package slackbot
+package routing
 
 import (
 	"encoding/json"

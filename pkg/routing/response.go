@@ -1,4 +1,4 @@
-package slackbot
+package routing
 
 import (
 	"encoding/json"
@@ -12,7 +12,7 @@ import (
 type Response events.APIGatewayProxyResponse
 
 // ErrorResponse takes a string and generates an appropriate Response.
-func ErrorResponse(msg string, status int) (Response, error) {
+func errorResponse(msg string, status int) (Response, error) {
 	p := struct {
 		Status  string `json:"status"`
 		Message string `json:"message"`
@@ -31,7 +31,7 @@ func ErrorResponse(msg string, status int) (Response, error) {
 }
 
 // SuccessResponse takes a string and generates an appropriate Response.
-func SuccessResponse(msg string) (Response, error) {
+func successResponse(msg string) (Response, error) {
 	p := struct {
 		Status  string `json:"status"`
 		Message string `json:"message"`

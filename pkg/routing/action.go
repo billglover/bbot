@@ -1,13 +1,38 @@
-package slackbot
+package routing
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
+	"net/http"
 	"net/url"
 
+	"github.com/billglover/bbot/pkg/queue"
 	"github.com/pkg/errors"
 )
 
-func ParseAction(b string) (MessageAction, error) {
+func (r *Router) handleAction(ctx context.Context, req Request) (Response, error) {
+	action, err := parseAction(req.Body)
+	if err != nil {
+		fmt.Println("WARN:", err)
+		return errorResponse("unable to parse action", http.StatusBadRequest)
+	}
+
+	h := queue.Headers{
+		"Team":   action.Team.ID,
+		"Action": action.CallbackID,
+	}
+
+	err = r.ActionQ.Queue(h, action)
+	if err != nil {
+		fmt.Println("ERROR:", err)
+		return errorResponse("unable to queue action for further processing", http.StatusInternalServerError)
+	}
+
+	return successResponse("")
+}
+
+func parseAction(b string) (MessageAction, error) {
 	ma := MessageAction{}
 
 	form, err := url.ParseQuery(b)

@@ -24,3 +24,5 @@
 - Add permissions to allow function to send messages on SQS queue
 - Place inbound message actions on the queues
 - Wrap the SQS API to simplify queueing of messages
+- Restructure the packages based on function
+- Parse messages from the action queue

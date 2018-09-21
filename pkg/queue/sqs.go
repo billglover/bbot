@@ -2,6 +2,7 @@ package queue
 
 import (
 	"encoding/json"
+	"errors"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -45,6 +46,9 @@ func (q *SQSQueue) Queue(h Headers, b Body) error {
 
 // NewSQSQueue takes the name of an AWS SQS queue and returns a pointer to a Q.
 func NewSQSQueue(name string) (*SQSQueue, error) {
+	if name == "" {
+		return nil, errors.New("Queue name cannot be empty")
+	}
 	q := new(SQSQueue)
 	sess := session.Must(session.NewSessionWithOptions(session.Options{SharedConfigState: session.SharedConfigEnable}))
 	q.svc = sqs.New(sess)
