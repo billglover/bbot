@@ -23,20 +23,18 @@ var tcs = []struct {
 				"X-Slack-Signature":         "v0=a2114d57b48eac39b9ad189dd8316235a7b4a8d21a10bd27519666489c69b503"},
 		},
 		Action: MessageAction{
-			Type:             "message_action",
-			CallbackID:       "flagMessage",
-			Team:             Team{ID: "TBLG57ECT", Domain: "buddybotdev"},
-			Channel:          Channel{ID: "CBLPRTX3P", Name: "general"},
-			User:             User{ID: "UBLKAG9K4", Name: "bill"},
-			ActionTimestamp:  json.Number("1535885531.310842"),
-			MessageTimestamp: json.Number("1535813905.000100"),
+			Type:       "message_action",
+			CallbackID: "flagMessage",
+			Team:       Team{ID: "TBLG57ECT", Domain: "buddybotdev"},
+			Channel:    Channel{ID: "CBLPRTX3P", Name: "general"},
+			User:       User{ID: "UBLKAG9K4", Name: "bill"},
+			ActionTs:   json.Number("1535885531.310842"),
+			MessageTs:  json.Number("1535813905.000100"),
 			Message: Message{
-				Msg: Msg{
-					UserID:    "UBLKAG9K4",
-					Type:      "message",
-					Text:      "hello",
-					Timestamp: "1535813905.000100",
-				},
+				UserID: "UBLKAG9K4",
+				Type:   "message",
+				Text:   "hello",
+				Ts:     "1535813905.000100",
 			},
 			ResponseURL: "https://hooks.slack.com/app/TBLG57ECT/429109817558/gnYAErMdhKzXWvT1CmJpVPGG",
 			TriggerID:   "427767237634.394549252435.6b8540a80ec073eab2ed85b4550a236a",
@@ -53,20 +51,18 @@ var tcs = []struct {
 				"X-Slack-Signature":         "v0=a2114d57b48eac39b9ad189dd8316235a7b4a8d21a10bd27519666489c69b503"},
 		},
 		Action: MessageAction{
-			Type:             "message_action",
-			CallbackID:       "flagMessage",
-			Team:             Team{ID: "TBLG57ECT", Domain: "buddybotdev"},
-			Channel:          Channel{ID: "CBLPRTX3P", Name: "general"},
-			User:             User{ID: "UBLKAG9K4", Name: "bill"},
-			ActionTimestamp:  json.Number("1536058881.467448"),
-			MessageTimestamp: json.Number("1536058875.000100"),
+			Type:       "message_action",
+			CallbackID: "flagMessage",
+			Team:       Team{ID: "TBLG57ECT", Domain: "buddybotdev"},
+			Channel:    Channel{ID: "CBLPRTX3P", Name: "general"},
+			User:       User{ID: "UBLKAG9K4", Name: "bill"},
+			ActionTs:   json.Number("1536058881.467448"),
+			MessageTs:  json.Number("1536058875.000100"),
 			Message: Message{
-				Msg: Msg{
-					UserID:    "UBLKAG9K4",
-					Type:      "message",
-					Text:      "",
-					Timestamp: "1536058875.000100",
-				},
+				UserID: "UBLKAG9K4",
+				Type:   "message",
+				Text:   "",
+				Ts:     "1536058875.000100",
 			},
 			ResponseURL: "https://hooks.slack.com/app/TBLG57ECT/428532210739/VSw8tqPU8SNKYcQ0ZIoYrh7G",
 			TriggerID:   "428810990741.394549252435.c931785a55575952f2c67edb4950858f",
@@ -83,22 +79,20 @@ var tcs = []struct {
 				"X-Slack-Signature":         "v0=a2114d57b48eac39b9ad189dd8316235a7b4a8d21a10bd27519666489c69b503"},
 		},
 		Action: MessageAction{
-			Type:             "message_action",
-			CallbackID:       "flagMessage",
-			Team:             Team{ID: "TBLG57ECT", Domain: "buddybotdev"},
-			Channel:          Channel{ID: "CBLPRTX3P", Name: "general"},
-			User:             User{ID: "UBLKAG9K4", Name: "bill"},
-			ActionTimestamp:  json.Number("1536060699.383687"),
-			MessageTimestamp: json.Number("1533595230.000090"),
+			Type:       "message_action",
+			CallbackID: "flagMessage",
+			Team:       Team{ID: "TBLG57ECT", Domain: "buddybotdev"},
+			Channel:    Channel{ID: "CBLPRTX3P", Name: "general"},
+			User:       User{ID: "UBLKAG9K4", Name: "bill"},
+			ActionTs:   json.Number("1536060699.383687"),
+			MessageTs:  json.Number("1533595230.000090"),
 			Message: Message{
-				Msg: Msg{
-					Type:      "message",
-					Text:      "Congrats <@UBLPTK0JH>! Score now at 8 :smile:",
-					Timestamp: "1533595230.000090",
-					SubType:   "bot_message",
-					BotID:     "BBL3GSL7K",
-					BotName:   "buddybot",
-				},
+				Type:    "message",
+				Text:    "Congrats <@UBLPTK0JH>! Score now at 8 :smile:",
+				Ts:      "1533595230.000090",
+				SubType: "bot_message",
+				BotID:   "BBL3GSL7K",
+				BotName: "buddybot",
 			},
 			ResponseURL: "https://hooks.slack.com/app/TBLG57ECT/428670626322/nQqdNXEWWZJpVgop3FTTM4BH",
 			TriggerID:   "428827157461.394549252435.9a81b8671849fb4f378f33988f09d1b5",
@@ -109,7 +103,7 @@ var tcs = []struct {
 func TestParseAction(t *testing.T) {
 	for _, tc := range tcs {
 		t.Run(tc.Name, func(t *testing.T) {
-			ma, err := ParseAction(tc.Request.Body)
+			ma, err := parseAction(tc.Request.Body)
 			if err != nil {
 				t.Errorf("unable to parse message body: %v", err)
 			}

@@ -7,7 +7,7 @@ import (
 	"github.com/aws/aws-lambda-go/lambda"
 
 	"github.com/billglover/bbot/pkg/routing"
-	ss "github.com/billglover/bbot/secrets"
+	ss "github.com/billglover/bbot/pkg/secrets"
 )
 
 var slackClientID string
@@ -32,7 +32,7 @@ func main() {
 	slackSigningSecret = secrets["/bbot/env/SLACK_SIGNING_SECRET"]
 
 	// read environment configuration
-	actionQ := os.Getenv("SQS_QUEUE_FLAGMESSAGE")
+	actionQ := os.Getenv("SQS_QUEUE_ACTION")
 	if actionQ == "" {
 		fmt.Println("ERROR: no queue name specified, check environemnt variables for SQS_QUEUE_FLAGMESSAGE")
 		os.Exit(1)

@@ -31,7 +31,7 @@ provider:
         - sqs:SendMessage
       Resource:
         Fn::GetAtt:
-          - flagMessageQueue
+          - messageActionQueue
           - Arn
         
 
@@ -54,24 +54,24 @@ functions:
               paths:
                 type: true
     environment:
-      SQS_QUEUE_FLAGMESSAGE:
-        Ref: flagMessageQueue
+      SQS_QUEUE_ACTION:
+        Ref: messageActionQueue
 
-  flagMessage:
-    handler: bin/flagMessage
+  takeAction:
+    handler: bin/takeAction
     events:
       - sqs:
           arn:
             Fn::GetAtt:
-              - flagMessageQueue
+              - messageActionQueue
               - Arn
 
 resources:
   Resources:
-    flagMessageQueue:
+    messageActionQueue:
       Type: "AWS::SQS::Queue"
       Properties:
-        QueueName: "bbot-flagMessageQueue"
+        QueueName: "bbot-messageActionQueue"
         Tags:
           - Key: "project"
             Value: "bbot"

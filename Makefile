@@ -1,6 +1,6 @@
 build:
-	env GOOS=linux go build -ldflags="-s -w" -o bin/acceptRequest functions/acceptRequest/main.go
-	env GOOS=linux go build -ldflags="-s -w" -o bin/flagMessage functions/flagMessage/main.go
+	env GOOS=linux go build -ldflags="-s -w" -o bin/acceptRequest cmd/acceptRequest/main.go
+	env GOOS=linux go build -ldflags="-s -w" -o bin/takeAction cmd/takeAction/main.go
 
 .PHONY: clean
 clean:
