@@ -4,12 +4,16 @@ import (
 	"encoding/json"
 	"errors"
 
+	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sqs"
 )
 
-// SQSQueue implements the Queue interface
+// SQSEvent is a Queue event.
+type SQSEvent events.SQSEvent
+
+// SQSQueue implements the Queue interface.
 type SQSQueue struct {
 	svc  *sqs.SQS
 	name string

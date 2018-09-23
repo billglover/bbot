@@ -31,7 +31,14 @@ provider:
         - sqs:SendMessage
       Resource:
         Fn::GetAtt:
-          - messageActionQueue
+          - flagMessageQueue
+          - Arn
+    - Effect: "Allow"
+      Action:
+        - sqs:SendMessage
+      Resource:
+        Fn::GetAtt:
+          - sendMessageQueue
           - Arn
         
 
@@ -43,35 +50,41 @@ package:
 
 functions:
 
-  acceptRequest:
-    handler: bin/acceptRequest
+  actionHandler:
+    handler: bin/actionHandler
     events:
       - http:
-          path: endpoint/{type}
+          path: endpoint/action
           method: post
-          request:
-            parameters:
-              paths:
-                type: true
     environment:
-      SQS_QUEUE_ACTION:
-        Ref: messageActionQueue
+      SQS_QUEUE_FLAGMESSAGE:
+        Ref: flagMessageQueue
 
-  takeAction:
-    handler: bin/takeAction
+  msgFlagger:
+    handler: bin/msgFlagger
     events:
       - sqs:
           arn:
             Fn::GetAtt:
-              - messageActionQueue
+              - flagMessageQueue
               - Arn
+    environment:
+      SQS_QUEUE_SENDMESSAGE:
+        Ref: sendMessageQueue
 
 resources:
   Resources:
-    messageActionQueue:
+    flagMessageQueue:
       Type: "AWS::SQS::Queue"
       Properties:
-        QueueName: "bbot-messageActionQueue"
+        QueueName: "bbot-flagMessageQueue"
+        Tags:
+          - Key: "project"
+            Value: "bbot"
+    sendMessageQueue:
+      Type: "AWS::SQS::Queue"
+      Properties:
+        QueueName: "bbot-sendMessageQueue"
         Tags:
           - Key: "project"
             Value: "bbot"
