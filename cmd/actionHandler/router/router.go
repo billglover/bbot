@@ -2,15 +2,12 @@ package router
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/url"
 
 	"github.com/billglover/bbot/pkg/agw"
 	"github.com/billglover/bbot/pkg/queue"
 	"github.com/billglover/bbot/pkg/slack"
-	"github.com/pkg/errors"
 )
 
 // Router handles Message Action requests and validates them before routing
@@ -57,15 +54,15 @@ func (r *Router) RegisterRoute(id, url string) error {
 	return nil
 }
 
-// Route takes a context and an inbound request. It routes the request based on
-// the registered routes. It returns a response to the gateway.
+// Route takes a context and an inbound request. It routes the request to a queue based
+// on the registered routes. It returns a response and an error.
 func (r *Router) Route(ctx context.Context, req agw.Request) (agw.Response, error) {
 	if req.IsValid(r.signingSecret) == false {
 		fmt.Println("ERROR: invalid request, check request signature")
 		return agw.ErrorResponse("invalid request, check request signature", http.StatusBadRequest)
 	}
 
-	action, err := parseAction(req.Body)
+	action, err := slack.ParseAction(req.Body)
 	if err != nil {
 		fmt.Println("ERROR: unable to parse message action:", err)
 		return agw.ErrorResponse("unable to parse message action", http.StatusBadRequest)
@@ -89,19 +86,4 @@ func (r *Router) Route(ctx context.Context, req agw.Request) (agw.Response, erro
 
 	fmt.Println("INFO: action queued for processing")
 	return agw.SuccessResponse()
-}
-
-func parseAction(b string) (slack.MessageAction, error) {
-	ma := slack.MessageAction{}
-
-	form, err := url.ParseQuery(b)
-	if err != nil {
-		return ma, errors.Wrap(err, "failed to parse request body")
-	}
-
-	err = json.Unmarshal([]byte(form.Get("payload")), &ma)
-	if err != nil {
-		return ma, errors.Wrap(err, "failed to parse request body")
-	}
-	return ma, err
 }

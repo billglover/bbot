@@ -24,11 +24,11 @@ func New(botToken, botUserToken string) (*Workspace, error) {
 // NotifyAdmins will send the message to the Admins channel. An error is returned
 // if unable to send the message.
 func (w *Workspace) NotifyAdmins(m Message) error {
-	return nil
+	return errors.New("NotifyAdmins not implemented")
 }
 
 // NotifyUser will send an ephemeral message to the user. An error is returned
 // if unable to send the mssage.
 func (w *Workspace) NotifyUser(u User, m Message) error {
-	return nil
+	return errors.New("NotifyUser not implemented")
 }

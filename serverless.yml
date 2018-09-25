@@ -13,7 +13,6 @@ provider:
     project: bbot
   tags:
     project: bbot
-
   iamRoleStatements:
     - Effect: "Allow"
       Action:
@@ -40,8 +39,21 @@ provider:
         Fn::GetAtt:
           - sendMessageQueue
           - Arn
+    - Effect: "Allow"
+      Action:
+        - dynamodb:GetItem
+        - dynamodb:DeleteItem
+        - dynamodb:PutItem
+        - dynamodb:Scan
+        - dynamodb:Query
+        - dynamodb:UpdateItem
+        - dynamodb:BatchWriteItem
+        - dynamodb:BatchGetItem
+      Resource:
+        Fn::GetAtt:
+          - tokenTable
+          - Arn
         
-
 package:
   exclude:
     - ./**
@@ -49,6 +61,18 @@ package:
     - ./bin/**
 
 functions:
+
+  authHandler:
+    handler: bin/authHandler
+    events:
+      - http:
+          path: endpoint/auth
+          method: get
+    environment:
+      BUDDYBOT_AUTH_TABLE:
+        Ref: tokenTable
+      BUDDYBOT_REGION:
+        Ref : "AWS::Region"
 
   actionHandler:
     handler: bin/actionHandler
@@ -71,6 +95,10 @@ functions:
     environment:
       SQS_QUEUE_SENDMESSAGE:
         Ref: sendMessageQueue
+      BUDDYBOT_AUTH_TABLE:
+        Ref: tokenTable
+      BUDDYBOT_REGION:
+        Ref : "AWS::Region"
 
 resources:
   Resources:
@@ -85,6 +113,24 @@ resources:
       Type: "AWS::SQS::Queue"
       Properties:
         QueueName: "bbot-sendMessageQueue"
+        Tags:
+          - Key: "project"
+            Value: "bbot"
+    tokenTable:
+      Type: 'AWS::DynamoDB::Table'
+      Properties:
+        TableName: bbot-tokens-${self:provider.stage}
+        AttributeDefinitions: 
+          - AttributeName: uid
+            AttributeType: S
+        KeySchema: 
+          - AttributeName: uid
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        SSESpecification:
+          SSEEnabled: true
         Tags:
           - Key: "project"
             Value: "bbot"

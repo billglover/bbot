@@ -8,11 +8,17 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Save stores a record in DynamoDB. It takes a region and table name. It
-// returns an error if unable to save the record.
-func Save(r, t string, v interface{}) error {
+// DynamoDB represents a DynamoDB table.
+type DynamoDB struct {
+	Region string
+	Table  string
+}
+
+// Save stores a record in DynamoDB. It takes an interface and returns an error
+// if unable to save the record.
+func (d *DynamoDB) Save(v interface{}) error {
 	sess, err := session.NewSession(&aws.Config{
-		Region: aws.String(r)},
+		Region: aws.String(d.Region)},
 	)
 	if err != nil {
 		return errors.Wrap(err, "unable to open session")
@@ -27,7 +33,7 @@ func Save(r, t string, v interface{}) error {
 
 	record := &dynamodb.PutItemInput{
 		Item:      value,
-		TableName: aws.String(t),
+		TableName: aws.String(d.Table),
 	}
 
 	if _, err := ddb.PutItem(record); err != nil {
@@ -39,9 +45,9 @@ func Save(r, t string, v interface{}) error {
 
 // Retrieve returns a record from DynamoDb. It takes a region, table name, key,
 // an ID, and an interface. It returns an error if unable to retrieve the value.
-func Retrieve(r, t, k, id string, v interface{}) error {
+func (d *DynamoDB) Retrieve(k, id string, v interface{}) error {
 	sess, err := session.NewSession(&aws.Config{
-		Region: aws.String(r)},
+		Region: aws.String(d.Region)},
 	)
 	if err != nil {
 		return errors.Wrap(err, "unable to open session")
@@ -50,13 +56,17 @@ func Retrieve(r, t, k, id string, v interface{}) error {
 	ddb := dynamodb.New(sess)
 
 	request := &dynamodb.GetItemInput{
-		TableName: aws.String(t),
+		TableName: aws.String(d.Table),
 		Key:       map[string]*dynamodb.AttributeValue{k: {S: aws.String(id)}},
 	}
 
 	record, err := ddb.GetItem(request)
 	if err != nil {
 		return errors.Wrap(err, "unable to retrieve record")
+	}
+
+	if len(record.Item) == 0 {
+		return errors.New("no auth token exists for team: " + id)
 	}
 
 	if err := dynamodbattribute.UnmarshalMap(record.Item, v); err != nil {
