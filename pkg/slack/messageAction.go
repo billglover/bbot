@@ -1,6 +1,11 @@
 package slack
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"net/url"
+
+	"github.com/pkg/errors"
+)
 
 // MessageAction is the message received from the Slack API in response
 // to a user performing an action on a message.
@@ -29,20 +34,18 @@ type Channel struct {
 	Name string `json:"name"`
 }
 
-// User is a Slack user.
-type User struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
-}
+// ParseAction parses the payload of a request, a string, and returns a MessageAction.
+func ParseAction(b string) (MessageAction, error) {
+	ma := MessageAction{}
 
-// Message is a Slack message.
-type Message struct {
-	Type     string `json:"type,omitempty"`
-	UserID   string `json:"user,omitempty"`
-	Text     string `json:"text,omitempty"`
-	Ts       string `json:"ts,omitempty"`
-	ThreadTs string `json:"thread_ts,omitempty"`
-	SubType  string `json:"subtype,omitempty"`
-	BotID    string `json:"bot_id,omitempty"`
-	BotName  string `json:"username,omitempty"`
+	form, err := url.ParseQuery(b)
+	if err != nil {
+		return ma, errors.Wrap(err, "failed to parse request body")
+	}
+
+	err = json.Unmarshal([]byte(form.Get("payload")), &ma)
+	if err != nil {
+		return ma, errors.Wrap(err, "failed to parse request body")
+	}
+	return ma, err
 }
