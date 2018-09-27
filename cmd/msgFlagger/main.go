@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/billglover/bbot/pkg/messaging"
 	"github.com/billglover/bbot/pkg/storage"
 
 	"github.com/aws/aws-lambda-go/lambda"
@@ -85,6 +86,7 @@ func handler(ctx context.Context, evt queue.SQSEvent) error {
 // Conduct violation. It returns an error if unable to flag the message.
 func FlagMessage(m slack.MessageAction) error {
 
+	// Query slack to find the admins channel
 	db := storage.DynamoDB{
 		Region: region,
 		Table:  authTable,
@@ -94,24 +96,91 @@ func FlagMessage(m slack.MessageAction) error {
 		return errors.Wrap(err, "unable to fetch team tokens")
 	}
 
-	w, err := slack.New(ar.BotAccessToken, ar.AccessToken)
+	ws, err := slack.New(ar.BotAccessToken, ar.AccessToken, ar.BotUserID)
 	if err != nil {
-		return errors.Wrap(err, "unable to create workspace")
+		return errors.Wrap(err, "unable to establish slack workspace")
 	}
 
-	if err = w.NotifyAdmins(slack.Message{}); err != nil {
-		return errors.Wrap(err, "unable to notify admins")
+	adminChan, err := ws.AdminChannelID()
+	if err != nil {
+		fmt.Println("ERROR: unable to locate admin channel:", err)
 	}
 
-	if err = w.NotifyUser(slack.User{}, slack.Message{}); err != nil {
+	// Get the outbound queue for Slack messages
+	q, err := queue.NewSQSQueue(sendMessageQ)
+	if err != nil {
+		return errors.Wrap(err, "unable to determine queue")
+	}
+
+	// Send a message to the reporter to let them know their request has
+	// been received.
+	e := msgForReporter(m)
+	h := queue.Headers{"Team": e.Destination.TeamID}
+	err = q.Queue(h, e)
+	if err != nil {
 		return errors.Wrap(err, "unable to notify reporting user")
 	}
 
-	if err = w.NotifyUser(slack.User{}, slack.Message{}); err != nil {
-		return errors.Wrap(err, "unable to notify message author")
+	e = msgForAuthor(m)
+	h = queue.Headers{"Team": e.Destination.TeamID}
+	err = q.Queue(h, e)
+	if err != nil {
+		return errors.Wrap(err, "unable to notify author")
 	}
 
-	fmt.Println("INFO: FlagMessage complete")
+	if adminChan != "" {
+		e := msgForAdmins(m, adminChan)
+		h := queue.Headers{"Team": e.Destination.TeamID}
+		err = q.Queue(h, e)
+		if err != nil {
+			return errors.Wrap(err, "unable to notify admins")
+		}
+	}
 
 	return nil
+}
+
+func msgForReporter(report slack.MessageAction) messaging.Envelope {
+	e := messaging.Envelope{
+		Destination: messaging.Address{
+			TeamID:    report.Team.ID,
+			ChannelID: report.Channel.ID,
+			UserID:    report.User.ID,
+		},
+
+		Message: messaging.Message{
+			Text: "Thanks, we are looking into your flagged message. We may be in touch for more detail.",
+		},
+		Ephemeral: true,
+	}
+	return e
+}
+
+func msgForAuthor(report slack.MessageAction) messaging.Envelope {
+	e := messaging.Envelope{
+		Destination: messaging.Address{
+			TeamID:    report.Team.ID,
+			ChannelID: report.Channel.ID,
+			UserID:    report.Message.UserID,
+		},
+		Message: messaging.Message{
+			Text: "One of your recent messages was flagged for a potential Code of Conduct issue.",
+		},
+		Ephemeral: true,
+	}
+	return e
+}
+
+func msgForAdmins(report slack.MessageAction, channel string) messaging.Envelope {
+	e := messaging.Envelope{
+		Destination: messaging.Address{
+			TeamID:    report.Team.ID,
+			ChannelID: channel,
+		},
+		Message: messaging.Message{
+			Text: "A message was recently flagged for a potential  code of conduct issue.\n&gt; " + report.Message.Text,
+		},
+		Ephemeral: false,
+	}
+	return e
 }
