@@ -64,12 +64,11 @@ func handler(ctx context.Context, evt queue.SQSEvent) error {
 			return nil
 		}
 
-		// TODO: send the message to Slack
 		db := storage.DynamoDB{
 			Region: region,
 			Table:  authTable,
 		}
-		ar, err := secrets.GetTeamTokens(&db, e.TeamID)
+		ar, err := secrets.GetTeamTokens(&db, e.Destination.TeamID)
 		if err != nil {
 			fmt.Println("ERROR: unable to fetch team tokens:", err)
 			//return errors.Wrap(err, "unable to fetch team tokens")
