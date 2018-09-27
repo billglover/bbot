@@ -6,10 +6,13 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/billglover/bbot/pkg/slack"
+
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/billglover/bbot/pkg/messaging"
 	"github.com/billglover/bbot/pkg/queue"
 	"github.com/billglover/bbot/pkg/secrets"
+	"github.com/billglover/bbot/pkg/storage"
 )
 
 var (
@@ -62,7 +65,32 @@ func handler(ctx context.Context, evt queue.SQSEvent) error {
 		}
 
 		// TODO: send the message to Slack
-		fmt.Printf("%+v\n", e)
+		db := storage.DynamoDB{
+			Region: region,
+			Table:  authTable,
+		}
+		ar, err := secrets.GetTeamTokens(&db, e.TeamID)
+		if err != nil {
+			fmt.Println("ERROR: unable to fetch team tokens:", err)
+			//return errors.Wrap(err, "unable to fetch team tokens")
+			return nil
+		}
+
+		ws, err := slack.New(ar.BotAccessToken, ar.AccessToken, ar.BotUserID)
+		if err != nil {
+			fmt.Println("ERROR: unable to establish Slack workspace:", err)
+			//return errors.Wrap(err, "unable to establish Slack workspace")
+			return nil
+		}
+
+		err = ws.SendMessage(e)
+		if err != nil {
+			fmt.Println("ERROR: unable to send message to Slack:", err)
+			//return errors.Wrap(err, "unable to send message to Slack")
+			return nil
+		}
+
+		//fmt.Printf("%+v\n", e)
 	}
 
 	return nil
