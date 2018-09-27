@@ -94,6 +94,9 @@ func FlagMessage(m slack.MessageAction) error {
 		return errors.Wrap(err, "unable to fetch team tokens")
 	}
 
+	// TODO: rather than send messages to Slack directly, this function should
+	// place messages onto the sendMessageQueue to be handled by the msgSender
+	// function.
 	w, err := slack.New(ar.BotAccessToken, ar.AccessToken)
 	if err != nil {
 		return errors.Wrap(err, "unable to create workspace")
