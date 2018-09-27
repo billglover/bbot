@@ -1,4 +1,4 @@
-package messsaging
+package messaging
 
 // Message is an internal representation of messages that will be sent to a
 // Slack channel or user.
