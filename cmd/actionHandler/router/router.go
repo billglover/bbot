@@ -1,3 +1,12 @@
+/*
+Package router provides a service for routing Slack message actions to queues
+for processing. It validates all requests using the Slack signing key to ensure
+that all requests originated from Slack. Invalid requests are rejected.
+
+The router responds to the original request indicating the message has been
+routed successfully (accepted). If it is unable to route the request an
+appropriate error response is returned.
+*/
 package router
 
 import (
@@ -10,11 +19,9 @@ import (
 	"github.com/billglover/bbot/pkg/slack"
 )
 
-// Router handles Message Action requests and validates them before routing
-// them to appropriate queues.
+// Router requires access to the Slack signing secret and the mapping between
+// message actions and queues.
 type Router struct {
-	clientID      string
-	clientSecret  string
 	signingSecret string
 	queues        map[string]queue.Queuer
 }
