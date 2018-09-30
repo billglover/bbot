@@ -36,7 +36,6 @@ func New(botToken, botUserToken, botUser string) (*Workspace, error) {
 // SendMessage sends a message to Slack.
 func (w *Workspace) SendMessage(e messaging.Envelope) error {
 
-	// TODO: Issue #18 - we need to know the channel for ephemeral messages
 	switch {
 
 	// Ephemeral messages are sent to an individual user
@@ -55,10 +54,31 @@ func (w *Workspace) SendMessage(e messaging.Envelope) error {
 
 	// Standard messages without a UserID specified are sent to a channel
 	case e.Ephemeral == false && e.Destination.UserID == "":
+
 		msgParams := api.PostMessageParameters{
 			Username: w.botUser,
 			AsUser:   true,
 			Markdown: true,
+		}
+
+		if e.Message.Attachments != nil {
+			attachments := make([]api.Attachment, len(e.Message.Attachments))
+			for i, a := range e.Message.Attachments {
+				attachments[i] = api.Attachment{
+					Title:   a.Title,
+					Pretext: a.Description,
+				}
+
+				// include all fields
+				if a.Fields != nil {
+					fields := make([]api.AttachmentField, len(a.Fields))
+					for j, f := range a.Fields {
+						fields[j] = api.AttachmentField{Title: f.Name, Value: f.Value, Short: f.Short}
+					}
+					attachments[i].Fields = fields
+				}
+			}
+			msgParams.Attachments = attachments
 		}
 
 		ch, ts, err := w.botClient.PostMessage(e.Destination.ChannelID, e.Message.Text, msgParams)
@@ -100,4 +120,12 @@ func (w *Workspace) AdminChannelID() (string, error) {
 	}
 
 	return id, nil
+}
+
+// UserName takes a UserID and returns the corresponding UserName. It reutrns
+// an error if it is unable to look up the user name.
+func (w *Workspace) UserName(id string) (string, error) {
+
+	user, err := w.botClient.GetUserInfo(id)
+	return user.Name, err
 }
