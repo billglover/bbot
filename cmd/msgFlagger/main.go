@@ -177,11 +177,16 @@ One of our admins will be in touch to help highlight the message that was flagge
 // msgForAdmins takes a message action and constructs a message that will be
 // sent to the admins channel to allow admins to investigate the report.
 func msgForAdmins(report slack.MessageAction, channel string) messaging.Envelope {
-author, err := getUserName(report.Team.ID, report.Message.UserID)
-if err != nil {
-	fmt.Println("ERROR: unable to get author name")
-	author = "unknown"
-}
+	author, err := getUserName(report.Team.ID, report.Message.UserID)
+	if err != nil {
+		fmt.Println("ERROR: unable to get author name")
+		author = "unknown"
+	}
+
+	permalink, err := getPermalink(report.Team.ID, report.Channel.ID, string(report.MessageTs))
+	if err != nil {
+		fmt.Println("ERROR: unable to get permalink to message")
+	}
 
 	e := messaging.Envelope{
 		Destination: messaging.Address{
@@ -191,10 +196,11 @@ if err != nil {
 		Message: messaging.Message{
 			Attachments: []messaging.Attachment{
 				{
-					Title: "Message Flagged",
+					Title:       "Message Flagged",
+					TitleLink: permalink,
 					Description: "The following message has been flagged for a potential Code of Conduct violation.",
 					Fields: []messaging.Field{
-						{Name: "message", Value:report.Message.Text, Short: false},
+						{Name: "message", Value: report.Message.Text, Short: false},
 						{Name: "reporter", Value: report.User.Name, Short: true},
 						{Name: "author", Value: author, Short: true},
 						{Name: "channel", Value: report.Channel.Name, Short: true},
@@ -238,7 +244,7 @@ func getAdminChannel(t string) (string, error) {
 	return adminChan, nil
 }
 
-func getUserName(t, id string) (string, error){
+func getUserName(t, id string) (string, error) {
 	var userName string
 	db := storage.DynamoDB{
 		Region: region,
@@ -260,4 +266,27 @@ func getUserName(t, id string) (string, error){
 	}
 
 	return userName, nil
+}
+
+func getPermalink(t, ch, ts string) (string, error){
+	var permalink string
+	db := storage.DynamoDB{
+		Region: region,
+		Table:  authTable,
+	}
+	ar, err := secrets.GetTeamTokens(&db, t)
+	if err != nil {
+		return permalink, errors.Wrap(err, "unable to fetch team tokens")
+	}
+
+	ws, err := slack.New(ar.BotAccessToken, ar.AccessToken, ar.BotUserID)
+	if err != nil {
+		return permalink, errors.Wrap(err, "unable to establish slack workspace")
+	}
+
+	permalink, err = ws.Permalink(ch, ts)
+	if err != nil {
+		return permalink, errors.Wrap(err, "unable to get message permalink")
+	}
+	return permalink, nil
 }
