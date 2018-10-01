@@ -65,8 +65,9 @@ func (w *Workspace) SendMessage(e messaging.Envelope) error {
 			attachments := make([]api.Attachment, len(e.Message.Attachments))
 			for i, a := range e.Message.Attachments {
 				attachments[i] = api.Attachment{
-					Title:   a.Title,
-					Pretext: a.Description,
+					Title:     a.Title,
+					TitleLink: a.TitleLink,
+					Pretext:   a.Description,
 				}
 
 				// include all fields
@@ -128,4 +129,17 @@ func (w *Workspace) UserName(id string) (string, error) {
 
 	user, err := w.botClient.GetUserInfo(id)
 	return user.Name, err
+}
+
+// Permalink takes a message timestamp and returns the corresponding permalink.
+// It returns an error if it is unable to look up the permalink.
+func (w *Workspace) Permalink(ch, ts string) (string, error) {
+	params := api.GetPermalinkParameters{
+		Channel: ch,
+		Ts:      ts,
+	}
+
+	permalink, err := w.botClient.GetPermalink(&params)
+	fmt.Println("Permalink:", permalink)
+	return permalink, err
 }

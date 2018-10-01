@@ -2,7 +2,7 @@ module github.com/billglover/bbot
 
 require (
 	github.com/aws/aws-lambda-go v1.6.0
-	github.com/aws/aws-sdk-go v1.15.45
+	github.com/aws/aws-sdk-go v1.15.46
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/gopherjs/gopherjs v0.0.0-20180825215210-0210a2f0f73c // indirect
 	github.com/gorilla/websocket v1.4.0 // indirect
@@ -15,4 +15,8 @@ require (
 	github.com/smartystreets/assertions v0.0.0-20180927180507-b2de0cb4f26d // indirect
 	github.com/smartystreets/goconvey v0.0.0-20180222194500-ef6db91d284a // indirect
 	github.com/stretchr/testify v1.2.2 // indirect
+	golang.org/x/net v0.0.0-20180926154720-4dfa2610cdf3 // indirect
+	golang.org/x/text v0.3.0 // indirect
 )
+
+replace github.com/nlopes/slack => github.com/billglover/slack v0.3.1-0.20180809083741-d10b0e15d99a
