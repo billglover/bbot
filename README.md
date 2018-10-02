@@ -1,5 +1,5 @@
 # BuddyBot
-![Is_a Slack_Bot](https://img.shields.io/badge/Is_a-Slack_Bot-ab47bc.svg?style=flat-square)  ![Uses Serverless_Framework](https://img.shields.io/badge/Uses-Serverless_Framework-brightgreen.svg?style=flat-square)   ![Runs_on Amazon_AWS_Lambda](https://img.shields.io/badge/Runs_on-Amazon_AWS_Lambda-ffad00.svg?style=flat-square)
+![Is_a Slack_Bot](https://img.shields.io/badge/Is_a-Slack_Bot-ab47bc.svg?style=flat-square)  ![Uses Serverless_Framework](https://img.shields.io/badge/Uses-Serverless_Framework-brightgreen.svg?style=flat-square)   ![Runs_on Amazon_AWS_Lambda](https://img.shields.io/badge/Runs_on-Amazon_AWS_Lambda-ffad00.svg?style=flat-square)  ![PRs Welcome](https://img.shields.io/badge/PRs-Welcome-brightgreen.svg?style=flat-square)
 
 BuddyBot is a community minded Slack Bot. It allows people to flag Slack messages for possible **Code of Conduct violation**. When a message is flagged three things happen:
 
