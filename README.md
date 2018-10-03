@@ -15,7 +15,7 @@ BuddyBot is a community minded Slack Bot. It allows people to flag Slack message
 
 ## Tools Used
 + [**Serverless Framework**](https://serverless.com)
-+ **Amazon AWS Lambda**.
++ **Amazon AWS Lambda**
 
 The BuddyBoy uses access tokens. **No messages, user data is stored**.
 
