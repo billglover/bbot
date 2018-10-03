@@ -59,6 +59,7 @@ package:
     - ./**
   include:
     - ./bin/**
+    - templates/reporter.txt
 
 functions:
 
