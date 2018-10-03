@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"os"
 
 	"github.com/billglover/bbot/pkg/messaging"
@@ -136,16 +138,20 @@ func FlagMessage(m slack.MessageAction) error {
 // msgForReporter takes a message action and constructs a message that will be
 // sent to the user who reported the message.
 func msgForReporter(report slack.MessageAction) messaging.Envelope {
+
+	var txt string
+	txt, err := render("templates/reporter.txt", nil)
+	if err != nil {
+		txt = "Thank you for flagging the potential Code of Conduct violation. We will investigate."
+	}
+
 	e := messaging.Envelope{
 		Destination: messaging.Address{
 			TeamID:    report.Team.ID,
 			ChannelID: report.Channel.ID,
 			UserID:    report.User.ID,
 		},
-
-		Message: messaging.Message{
-			Text: "Thanks, we are looking into your flagged message. We may be in touch for more detail.",
-		},
+		Message:   messaging.Message{Text: txt},
 		Ephemeral: true,
 	}
 	return e
@@ -197,7 +203,7 @@ func msgForAdmins(report slack.MessageAction, channel string) messaging.Envelope
 			Attachments: []messaging.Attachment{
 				{
 					Title:       "Message Flagged",
-					TitleLink: permalink,
+					TitleLink:   permalink,
 					Description: "The following message has been flagged for a potential Code of Conduct violation.",
 					Fields: []messaging.Field{
 						{Name: "message", Value: report.Message.Text, Short: false},
@@ -268,7 +274,7 @@ func getUserName(t, id string) (string, error) {
 	return userName, nil
 }
 
-func getPermalink(t, ch, ts string) (string, error){
+func getPermalink(t, ch, ts string) (string, error) {
 	var permalink string
 	db := storage.DynamoDB{
 		Region: region,
@@ -289,4 +295,17 @@ func getPermalink(t, ch, ts string) (string, error){
 		return permalink, errors.Wrap(err, "unable to get message permalink")
 	}
 	return permalink, nil
+}
+
+func render(file string, data interface{}) (string, error) {
+	t, err := template.ParseFiles(file)
+	if err != nil {
+		return "", err
+	}
+
+	var txt bytes.Buffer
+	if err = t.Execute(&txt, nil); err != nil {
+		return "", err
+	}
+	return txt.String(), nil
 }
