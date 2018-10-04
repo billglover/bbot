@@ -1,0 +1,9 @@
+language: go
+
+go:
+  - "1.11.x"
+
+script:
+  - GO111MODULE=on make build
+  - GO111MODULE=on go vet
+  - GO111MODULE=on go test
