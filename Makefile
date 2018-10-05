@@ -1,8 +1,12 @@
+GOOS=linux
+GO111MODULE=on
+export GOOS GO111MODULE
+
 build:
-	env GOOS=linux go build -ldflags="-s -w" -o bin/actionHandler cmd/actionHandler/main.go
-	env GOOS=linux go build -ldflags="-s -w" -o bin/authHandler cmd/authHandler/main.go
-	env GOOS=linux go build -ldflags="-s -w" -o bin/msgFlagger cmd/msgFlagger/main.go
-	env GOOS=linux go build -ldflags="-s -w" -o bin/msgSender cmd/msgSender/main.go
+	go build -ldflags="-s -w" -o bin/actionHandler cmd/actionHandler/main.go
+	go build -ldflags="-s -w" -o bin/authHandler cmd/authHandler/main.go
+	go build -ldflags="-s -w" -o bin/msgFlagger cmd/msgFlagger/main.go
+	go build -ldflags="-s -w" -o bin/msgSender cmd/msgSender/main.go
 
 .PHONY: clean
 clean:
