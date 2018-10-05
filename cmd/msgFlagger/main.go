@@ -160,21 +160,20 @@ func msgForReporter(report slack.MessageAction) messaging.Envelope {
 // msgForAuthor takes a message action and constructs a message that will be
 // sent to the user who originally authored the message.
 func msgForAuthor(report slack.MessageAction) messaging.Envelope {
+
+	var txt string
+	txt, err := render("templates/author.txt", nil)
+	if err != nil {
+		txt = "One of your recent messages has been flagged as it may not comply with the Code of Conduct. One of our admins will investigate the context, but consider an empathetic review of your recent messages in the meantime."
+	}
+
 	e := messaging.Envelope{
 		Destination: messaging.Address{
 			TeamID:    report.Team.ID,
 			ChannelID: report.Channel.ID,
 			UserID:    report.Message.UserID,
 		},
-		Message: messaging.Message{
-			Text: `One of your recent messages was flagged for a potential Code of Conduct issue.
-
-With this in mind, we encourage you to re-read your recent messages and consider re-phrasing anything that may be interpreted in a way that is in breach of our Code of Conduct.
-
-It is acknowledged that occasionally we all post messages in good faith that are subsequently read in a way that was never intended. Language can be nuanced, tone difficult to guage and cultural or personal context challenging to comprehend.
-
-One of our admins will be in touch to help highlight the message that was flagged and answer any questions you may have.`,
-		},
+		Message:   messaging.Message{Text: txt},
 		Ephemeral: true,
 	}
 	return e
