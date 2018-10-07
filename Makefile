@@ -7,7 +7,7 @@ test:
 	go test ./...
 
 .PHONY: build
-build: test
+build:
 	go build -ldflags="-s -w" -o bin/actionHandler cmd/actionHandler/main.go
 	go build -ldflags="-s -w" -o bin/authHandler cmd/authHandler/main.go
 	go build -ldflags="-s -w" -o bin/msgFlagger cmd/msgFlagger/main.go
