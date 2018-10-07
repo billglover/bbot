@@ -1,0 +1,7 @@
+dev:
+  domainName: 'dev.buddybot.billglover.me'
+  certificateName: 'buddybot.billglover.me'
+
+prod:
+  domainName: 'buddybot.billglover.me'
+  certificateName: 'buddybot.billglover.me'

@@ -12,6 +12,12 @@ build:
 clean:
 	rm -rf ./bin ./vendor
 
-.PHONY: deploy
-deploy: clean build
-	sls deploy --verbose
+.PHONY: stage
+stage: clean build
+	sls create_domain -s dev
+	sls deploy --verbose --stage dev
+
+.PHONY: release
+release: clean build
+	sls create_domain -s prod
+	sls deploy --verbose --stage prod

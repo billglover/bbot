@@ -1,14 +1,31 @@
 service: bbot
 frameworkVersion: ">=1.28.0 <2.0.0"
 
+plugins:
+  - serverless-domain-manager
+
+custom:
+  stage: ${self:provider.stage}
+  stageConfig: ${file(./serverless_stages.yml):${self:custom.stage}}
+
+  customDomain:
+    domainName: ${self:custom.stageConfig.domainName}
+    basePath: api
+    certificateName: ${self:custom.stageConfig.certificateName}
+    stage: ${self:custom.stage}
+    createRoute53Record: true
+    hostedZoneId: Z1EH888BF5XP0N
+    endpointType: edge
+
 provider:
   name: aws
-  stackName: bbot
-  apiName: bbot
+  stackName: bbot-${self:provider.stage}
+  apiName: bbot-${self:provider.stage}
   runtime: go1.x
   memorySize: 128
-  stage: dev
+  stage: ${opt:stage, 'dev'}
   region: eu-west-1
+  endpointType: edge
   stackTags:
     project: bbot
   tags:
@@ -67,7 +84,7 @@ functions:
     handler: bin/authHandler
     events:
       - http:
-          path: endpoint/auth
+          path: auth
           method: get
     environment:
       BUDDYBOT_AUTH_TABLE:
@@ -79,7 +96,7 @@ functions:
     handler: bin/actionHandler
     events:
       - http:
-          path: endpoint/action
+          path: action
           method: post
     environment:
       SQS_QUEUE_FLAGMESSAGE:
@@ -120,14 +137,14 @@ resources:
     flagMessageQueue:
       Type: "AWS::SQS::Queue"
       Properties:
-        QueueName: "bbot-flagMessageQueue"
+        QueueName: "bbot-flagMessageQueue-${self:provider.stage}"
         Tags:
           - Key: "project"
             Value: "bbot"
     sendMessageQueue:
       Type: "AWS::SQS::Queue"
       Properties:
-        QueueName: "bbot-sendMessageQueue"
+        QueueName: "bbot-sendMessageQueue-${self:provider.stage}"
         Tags:
           - Key: "project"
             Value: "bbot"
