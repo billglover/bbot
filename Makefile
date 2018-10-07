@@ -1,8 +1,13 @@
-GOOS=linux
 GO111MODULE=on
 export GOOS GO111MODULE
 
-build:
+test:
+	go vet ./...
+	go fmt ./...
+	go test ./...
+
+.PHONY: build
+build: test
 	go build -ldflags="-s -w" -o bin/actionHandler cmd/actionHandler/main.go
 	go build -ldflags="-s -w" -o bin/authHandler cmd/authHandler/main.go
 	go build -ldflags="-s -w" -o bin/msgFlagger cmd/msgFlagger/main.go

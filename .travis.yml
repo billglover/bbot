@@ -3,7 +3,28 @@ language: go
 go:
   - "1.11.x"
 
-script:
-  - GO111MODULE=on make build
-  - GO111MODULE=on go vet ./...
-  - GO111MODULE=on go test ./...
+jobs:
+  include:
+    - stage: "Tests"
+      script:
+        - make test
+        - make build
+
+    - stage: "Deploy Staging"
+      script: skip
+      before_deploy:
+        - npm install -g serverless
+        - npm install -g serverless-domain-manager
+      deploy:
+        - make stage
+
+    - stage: "Deploy Release"
+      script: skip
+      before_deploy:
+        - npm install -g serverless
+        - npm install -g serverless-domain-manager
+      deploy:
+        on:
+          tags: true
+            - make release
+
