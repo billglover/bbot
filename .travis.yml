@@ -18,6 +18,8 @@ jobs:
       deploy:
         provider: script
         script: make stage
+        on:
+          all_branches: true
 
     - stage: "Deploy Release"
       script: skip
