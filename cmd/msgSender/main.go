@@ -23,18 +23,6 @@ var (
 )
 
 func main() {
-	// retrieve secrets from the AWS parameter store
-	s, err := secrets.GetSecrets([]string{
-		"/bbot/env/SLACK_CLIENT_ID",
-		"/bbot/env/SLACK_CLIENT_SECRET",
-	})
-	if err != nil {
-		fmt.Println("ERROR: unable to retrieve secrets from parameter store:", err)
-		os.Exit(1)
-	}
-	clientID = s["/bbot/env/SLACK_CLIENT_ID"]
-	clientSecret = s["/bbot/env/SLACK_CLIENT_SECRET"]
-
 	region = os.Getenv("BUDDYBOT_REGION")
 	if region == "" {
 		region = os.Getenv("BUDDYBOT_REGION")
@@ -47,6 +35,24 @@ func main() {
 		fmt.Println("ERROR: BUDDYBOT_AUTH_TABLE environment variable not set")
 		os.Exit(1)
 	}
+
+	stage := os.Getenv("BUDDYBOT_STAGE")
+	if stage == "" {
+		fmt.Println("ERROR: BUDDYBOT_STAGE environment variable not set")
+		os.Exit(1)
+	}
+
+	// retrieve secrets from the AWS parameter store
+	s, err := secrets.GetSecrets([]string{
+		"/bbot/" + stage + "/SLACK_CLIENT_ID",
+		"/bbot/" + stage + "/SLACK_CLIENT_SECRET",
+	})
+	if err != nil {
+		fmt.Println("ERROR: unable to retrieve secrets from parameter store:", err)
+		os.Exit(1)
+	}
+	clientID = s["/bbot/"+stage+"/SLACK_CLIENT_ID"]
+	clientSecret = s["/bbot/"+stage+"/SLACK_CLIENT_SECRET"]
 
 	lambda.Start(handler)
 }

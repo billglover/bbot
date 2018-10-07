@@ -41,7 +41,7 @@ provider:
           - - "arn:aws:ssm"
             - "Ref" : "AWS::Region"
             - "Ref" : "AWS::AccountId"
-            - "parameter/bbot/*"
+            - "parameter/bbot/${self:custom.stage}/*"
     - Effect: "Allow"
       Action:
         - sqs:SendMessage
@@ -87,6 +87,7 @@ functions:
           path: auth
           method: get
     environment:
+      BUDDYBOT_STAGE: ${self:provider.stage}
       BUDDYBOT_AUTH_TABLE:
         Ref: tokenTable
       BUDDYBOT_REGION:
@@ -99,6 +100,7 @@ functions:
           path: action
           method: post
     environment:
+      BUDDYBOT_STAGE: ${self:provider.stage}
       SQS_QUEUE_FLAGMESSAGE:
         Ref: flagMessageQueue
 
@@ -111,6 +113,7 @@ functions:
               - flagMessageQueue
               - Arn
     environment:
+      BUDDYBOT_STAGE: ${self:provider.stage}
       SQS_QUEUE_SENDMESSAGE:
         Ref: sendMessageQueue
       BUDDYBOT_AUTH_TABLE:
@@ -127,6 +130,7 @@ functions:
               - sendMessageQueue
               - Arn
     environment:
+      BUDDYBOT_STAGE: ${self:provider.stage}
       BUDDYBOT_AUTH_TABLE:
         Ref: tokenTable
       BUDDYBOT_REGION:
