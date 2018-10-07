@@ -16,6 +16,7 @@ jobs:
         - npm install -g serverless
         - npm install -g serverless-domain-manager
       deploy:
+        skip_cleanup: true
         provider: script
         script: make stage
         on:
@@ -27,7 +28,9 @@ jobs:
         - npm install -g serverless
         - npm install -g serverless-domain-manager
       deploy:
+        skip_cleanup: true
         provider: script
         script: make release
         on:
           tags: true
+          branch: master
