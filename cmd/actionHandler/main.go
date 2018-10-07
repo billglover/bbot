@@ -11,18 +11,12 @@ import (
 
 func main() {
 
-	// Retrieve the Slack signing secret from the AWS parameter store. This is
-	// used to ensure incoming requests orginated from Slack. If we can't
-	// retrieve the certificate we terminate the program as there is nothing
-	// we can do without it.
-	s, err := secrets.GetSecrets([]string{"/bbot/env/SLACK_SIGNING_SECRET"})
-	if err != nil {
-		fmt.Println("ERROR: unable to retrieve signing secret from parameter store:", err)
-		os.Exit(1)
-	}
-	signingSecret, ok := s["/bbot/env/SLACK_SIGNING_SECRET"]
-	if ok == false {
-		fmt.Println("ERROR: unable to retrieve signing secret from parameter store:", err)
+	// We need to know the stage (or environment) we are running in. This
+	// allows us to determine the names of paramters to retrieve from the
+	// Parameter store.
+	stage := os.Getenv("BUDDYBOT_STAGE")
+	if stage == "" {
+		fmt.Println("ERROR: BUDDYBOT_STAGE environment variable not set")
 		os.Exit(1)
 	}
 
@@ -32,6 +26,21 @@ func main() {
 	flagMessageQ := os.Getenv("SQS_QUEUE_FLAGMESSAGE")
 	if flagMessageQ == "" {
 		fmt.Println("ERROR: SQS_QUEUE_FLAGMESSAGE environment variable not set")
+		os.Exit(1)
+	}
+
+	// Retrieve the Slack signing secret from the AWS parameter store. This is
+	// used to ensure incoming requests orginated from Slack. If we can't
+	// retrieve the certificate we terminate the program as there is nothing
+	// we can do without it.
+	s, err := secrets.GetSecrets([]string{"/bbot/" + stage + "/SLACK_SIGNING_SECRET"})
+	if err != nil {
+		fmt.Println("ERROR: unable to retrieve signing secret from parameter store:", err)
+		os.Exit(1)
+	}
+	signingSecret, ok := s["/bbot/"+stage+"/SLACK_SIGNING_SECRET"]
+	if ok == false {
+		fmt.Println("ERROR: unable to retrieve signing secret from parameter store:", err)
 		os.Exit(1)
 	}
 
