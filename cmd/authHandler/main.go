@@ -46,8 +46,8 @@ func main() {
 
 	// retrieve secrets from the AWS parameter store
 	s, err := secrets.GetSecrets([]string{
-		"/bbot/"+stage+"/SLACK_CLIENT_ID",
-		"/bbot/"+stage+"/SLACK_CLIENT_SECRET",
+		"/bbot/" + stage + "/SLACK_CLIENT_ID",
+		"/bbot/" + stage + "/SLACK_CLIENT_SECRET",
 	})
 	if err != nil {
 		fmt.Println("ERROR: unable to retrieve secrets from parameter store:", err)
