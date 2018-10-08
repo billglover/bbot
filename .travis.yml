@@ -19,7 +19,6 @@ jobs:
       on:
         branch: master
   - stage: Deploy Release
-    if: branch = master
     before_deploy:
     - npm install -g serverless
     - npm install serverless-domain-manager --save-dev
@@ -36,12 +35,10 @@ jobs:
           - "serverless.yml"
         on:
           tags: true
-          branch: master
           repo: billglover/bbot
       - provider: script
         skip_cleanup: true
         script: make release
         on:
           tags: true
-          branch: master
           repo: billglover/bbot
