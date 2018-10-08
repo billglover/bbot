@@ -24,16 +24,22 @@ jobs:
     - npm install -g serverless
     - npm install serverless-domain-manager --save-dev
     deploy:
-        skip_cleanup: true
       - provider: releases
+        skip_cleanup: true
         api_key:
           secure: p9NuXOiDBrhj39jj7tHD1GhqUKHqjdv85naI/xNWlGRhvlAfQBweCNfIGAbhL20C4xzwDl5DbhxDmXresaIUnmkT70CHE6hVRh5aXRiBYl2H8prm58LlysqiNOgbz1JmvYkxSgQ5sx76AKjuF+sHCtVbV/5xKO1fm50ns+k/Bl9DfdmPLu1AvsNax1SdNSJVDzKrgo7BxdowiMUMLiwWo+i/1LZhuxLYB7KKpgr0gQqoAJH5oKh6FPcXcbgZPXm6ISLOZKC/SsSNwIodwDl9JfVVfOD+/Kru5IrqzZMc9m4o2c0OE4Sw3Qoh/kqRPpuJD4XGEfxvM1xUSsWqZLNninSDxq8NWPar3PGyMEwIlG0bztAfB7jComv3ISyERz46pKRxoUeSaGp995yMd+Xk8xT6lOBFnS4ynsYXUEOcK5cQsz/9VFGMO1LBJvhf8Y814nkVMcgxy5ok5ojdnLfbmxscAnvEJh9RElk7/0FJL5YVrmHJRz1uGAsIzmMemP5xJLm6tp95s0Oy4emnIq3ocmGKktme9CNxF4cTw8qi9UjI29isYMXIJiD6T3nr8v9qU2BT3ALD6rjU04o3VRcFpe7qf+Ne7M5SeY2pbmMEedT/yFJMEDzTGzUmwxZDM3/bgkaEjzu14i4XepUxzE/DLs87KS3+L9G0vRhwLGYSO/s=
-        file: bin/*
+        file:
+          - "bin/*"
+          - "templates/*"
+          - "img/*"
+          - "serverless_stages.yml"
+          - "serverless.yml"
         on:
           tags: true
           branch: master
           repo: billglover/bbot
       - provider: script
+        skip_cleanup: true
         script: make release
         on:
           tags: true
