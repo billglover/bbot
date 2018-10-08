@@ -19,7 +19,7 @@ jobs:
         provider: script
         script: make stage
         on:
-          all_branches: true
+          branch: master
 
     - stage: "Deploy Release"
       before_deploy:
