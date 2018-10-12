@@ -11,11 +11,13 @@ import (
 	"github.com/billglover/bbot/pkg/messaging"
 	"github.com/billglover/bbot/pkg/storage"
 
+	xray "contrib.go.opencensus.io/exporter/aws"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/billglover/bbot/pkg/queue"
 	"github.com/billglover/bbot/pkg/secrets"
 	"github.com/billglover/bbot/pkg/slack"
 	"github.com/pkg/errors"
+	"go.opencensus.io/trace"
 )
 
 var (
@@ -25,7 +27,6 @@ var (
 )
 
 func main() {
-
 	// When we receive a message action from Slack we send out a number of
 	// messages on Slack. We send these by placing messages on a queue for
 	// processing. The location of this queue is stored as an environment
@@ -66,21 +67,39 @@ func main() {
 // queues this can lead to infinite loops. For now, we don't return errors
 // opting to log them instead.
 func handler(ctx context.Context, evt queue.SQSEvent) error {
+
+	fmt.Println("INFO: setting up tracing")
+	xe, err := xray.NewExporter(
+		xray.WithVersion("latest"),
+		xray.WithOnExport(func(in xray.OnExport) {
+			fmt.Println("publishing trace,", in.TraceID)
+		}),
+	)
+	if err != nil {
+		fmt.Printf("Failed to create the AWS X-Ray exporter: %v", err)
+	}
+	trace.RegisterExporter(xe)
+	trace.ApplyConfig(trace.Config{
+		DefaultSampler: trace.AlwaysSample(),
+	})
+	fmt.Println("INFO: tracing set-up without error")
+
+	spanCtx, span := trace.StartSpan(ctx, "msgFlagger/handler")
 	for _, msg := range evt.Records {
 
 		m := slack.MessageAction{}
 		err := json.Unmarshal([]byte(msg.Body), &m)
 		if err != nil {
 			fmt.Println("ERROR: unable to parse message action:", err)
-			return nil
 		}
 
-		if err := FlagMessage(m); err != nil {
+		if err := flagMessage(spanCtx, m); err != nil {
 			fmt.Println("ERROR: unable to flag message:", err)
-			return nil
 		}
-
 	}
+	span.End()
+	xe.Flush()
+	xe.Close()
 	return nil
 }
 
@@ -90,7 +109,8 @@ func handler(ctx context.Context, evt queue.SQSEvent) error {
 //
 // Each of these actions are triggered independently. However, if one or more
 // actions generates an error, an error is returned to the caller.
-func FlagMessage(m slack.MessageAction) error {
+func flagMessage(ctx context.Context, m slack.MessageAction) error {
+	spanCtx, span := trace.StartSpan(ctx, "msgFlagger/flagMessage")
 
 	// Get the outbound queue for Slack messages
 	q, err := queue.NewSQSQueue(sendMessageQ)
@@ -100,44 +120,53 @@ func FlagMessage(m slack.MessageAction) error {
 
 	// Send a message to the reporter to let them know their request has
 	// been received. Don't immediately return on error.
-	msg := msgForReporter(m)
+	aCtx, aSpan := trace.StartSpan(spanCtx, "msgFlagger/a")
+	msg := msgForReporter(aCtx, m)
 	h := queue.Headers{"Team": msg.Destination.TeamID}
-	errReporter := q.Queue(h, msg)
+	errReporter := q.Queue(aCtx, h, msg)
 	if errReporter != nil {
 		fmt.Println("ERROR: unable to notify reporting user:", errReporter)
 	}
+	aSpan.End()
 
 	// Send a message to the author to let them know one of their messages has
 	// been flagged. Don't immediately return on error.
-	msg = msgForAuthor(m)
+	bCtx, bSpan := trace.StartSpan(spanCtx, "msgFlagger/b")
+	msg = msgForAuthor(bCtx, m)
 	h = queue.Headers{"Team": msg.Destination.TeamID}
-	errAuthor := q.Queue(h, msg)
+	errAuthor := q.Queue(bCtx, h, msg)
 	if errAuthor != nil {
 		fmt.Println("ERROR: unable to notify author:", errAuthor)
 	}
+	bSpan.End()
 
 	// Query slack to find the admins channel so that we can notify the admins
 	// that a message has been flagged.
+	cCtx, cSpan := trace.StartSpan(spanCtx, "msgFlagger/c")
 	adminChan, errAdmin := getAdminChannel(m.Team.ID)
 	if errAdmin != nil {
 		fmt.Println("ERROR: unable to notify admins:", errAdmin)
 		return errors.New("there were issues notifying all parties")
 	}
 
-	msg = msgForAdmins(m, adminChan)
+	msg = msgForAdmins(cCtx, m, adminChan)
 	h = queue.Headers{"Team": msg.Destination.TeamID}
-	errAdmin = q.Queue(h, msg)
+	errAdmin = q.Queue(cCtx, h, msg)
 	if errAdmin != nil {
 		fmt.Println("ERROR: unable to notify admins:", errAdmin)
 		return errors.New("there were issues notifying all parties")
 	}
+	cSpan.End()
 
+	span.End()
 	return nil
 }
 
 // msgForReporter takes a message action and constructs a message that will be
 // sent to the user who reported the message.
-func msgForReporter(report slack.MessageAction) messaging.Envelope {
+func msgForReporter(ctx context.Context, report slack.MessageAction) messaging.Envelope {
+	_, span := trace.StartSpan(ctx, "msgFlagger/msgForReporter")
+	defer span.End()
 
 	var txt string
 	txt, err := render("templates/reporter.txt", nil)
@@ -159,7 +188,9 @@ func msgForReporter(report slack.MessageAction) messaging.Envelope {
 
 // msgForAuthor takes a message action and constructs a message that will be
 // sent to the user who originally authored the message.
-func msgForAuthor(report slack.MessageAction) messaging.Envelope {
+func msgForAuthor(ctx context.Context, report slack.MessageAction) messaging.Envelope {
+	_, span := trace.StartSpan(ctx, "msgFlagger/msgForAuthor")
+	defer span.End()
 
 	var txt string
 	txt, err := render("templates/author.txt", nil)
@@ -181,7 +212,10 @@ func msgForAuthor(report slack.MessageAction) messaging.Envelope {
 
 // msgForAdmins takes a message action and constructs a message that will be
 // sent to the admins channel to allow admins to investigate the report.
-func msgForAdmins(report slack.MessageAction, channel string) messaging.Envelope {
+func msgForAdmins(ctx context.Context, report slack.MessageAction, channel string) messaging.Envelope {
+	_, span := trace.StartSpan(ctx, "msgFlagger/msgForAdmins")
+	defer span.End()
+
 	author, err := getUserName(report.Team.ID, report.Message.UserID)
 	if err != nil {
 		fmt.Println("ERROR: unable to get author name")
