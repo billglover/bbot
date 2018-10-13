@@ -175,9 +175,10 @@ resources:
               - "deadLetterQueue"
               - "Arn"
           maxReceiveCount: 2
-    deadLetterQueue: 
-      QueueName: "bbot-deadLetterQueue-${self:provider.stage}"
+    deadLetterQueue:
       Type: AWS::SQS::Queue
+      Properties:
+        QueueName: "bbot-deadLetterQueue-${self:provider.stage}"
     tokenTable:
       Type: 'AWS::DynamoDB::Table'
       Properties:
