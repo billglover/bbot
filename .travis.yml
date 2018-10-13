@@ -23,7 +23,8 @@ jobs:
     if: tag IS present
     before_deploy:
     - npm install -g serverless
-    - npm install serverless-domain-manager --save-dev
+    - npm install --save-dev serverless-domain-manager
+    - npm install --save-dev serverless-plugin-tracing
     deploy:
       - provider: releases
         skip_cleanup: true
