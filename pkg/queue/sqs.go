@@ -3,11 +3,13 @@ package queue
 import (
 	"encoding/json"
 	"errors"
+	"context"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sqs"
+	"go.opencensus.io/trace"
 )
 
 // SQSEvent is a Queue event.
@@ -20,7 +22,9 @@ type SQSQueue struct {
 }
 
 // Queue takes message headers and a body and places it onto the SQS queue.
-func (q *SQSQueue) Queue(h Headers, b Body) error {
+func (q *SQSQueue) Queue(ctx context.Context, h Headers, b Body) error {
+	_, span := trace.StartSpan(ctx, "sqs/Queue")
+	defer span.End()
 
 	body, err := json.Marshal(b)
 	if err != nil {

@@ -85,7 +85,7 @@ func (r *Router) Route(ctx context.Context, req agw.Request) (agw.Response, erro
 		"Team": action.Team.ID,
 	}
 
-	err = q.Queue(h, action)
+	err = q.Queue(ctx, h, action)
 	if err != nil {
 		fmt.Println("ERROR: unable to handle message action:", err)
 		return agw.ErrorResponse("unable to handle message action", http.StatusInternalServerError)

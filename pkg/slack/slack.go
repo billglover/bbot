@@ -140,6 +140,5 @@ func (w *Workspace) Permalink(ch, ts string) (string, error) {
 	}
 
 	permalink, err := w.botClient.GetPermalink(&params)
-	fmt.Println("Permalink:", permalink)
 	return permalink, err
 }

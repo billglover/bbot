@@ -11,7 +11,8 @@ jobs:
     if: branch = master
     before_deploy:
     - npm install -g serverless
-    - npm install serverless-domain-manager --save-dev
+    - npm install --save-dev serverless-domain-manager
+    - npm install --save-dev serverless-plugin-tracing
     deploy:
       skip_cleanup: true
       provider: script
