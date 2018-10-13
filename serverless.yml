@@ -151,16 +151,33 @@ resources:
       Type: "AWS::SQS::Queue"
       Properties:
         QueueName: "bbot-flagMessageQueue-${self:provider.stage}"
+        MessageRetentionPeriod: 600
         Tags:
           - Key: "project"
             Value: "bbot"
+        RedrivePolicy: 
+          deadLetterTargetArn: 
+            Fn::GetAtt: 
+              - "deadLetterQueue"
+              - "Arn"
+          maxReceiveCount: 2
     sendMessageQueue:
       Type: "AWS::SQS::Queue"
       Properties:
         QueueName: "bbot-sendMessageQueue-${self:provider.stage}"
+        MessageRetentionPeriod: 600
         Tags:
           - Key: "project"
             Value: "bbot"
+        RedrivePolicy: 
+          deadLetterTargetArn: 
+            Fn::GetAtt: 
+              - "deadLetterQueue"
+              - "Arn"
+          maxReceiveCount: 2
+    deadLetterQueue: 
+      QueueName: "bbot-deadLetterQueue-${self:provider.stage}"
+      Type: AWS::SQS::Queue
     tokenTable:
       Type: 'AWS::DynamoDB::Table'
       Properties:
