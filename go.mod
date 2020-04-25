@@ -1,5 +1,7 @@
 module github.com/billglover/bbot
 
+go 1.14
+
 require (
 	contrib.go.opencensus.io/exporter/aws v0.0.0-20180906190126-dd54a7ef511e
 	github.com/aws/aws-lambda-go v1.6.0

@@ -105,7 +105,17 @@ func (w *Workspace) AdminChannelID() (string, error) {
 	var id string
 
 	// Note: private channels are known as Groups in Slack.
-	grps, err := w.userClient.GetGroups(true)
+	//grps, err := w.botClient.GetGroups(true)
+
+	// TODO: this will fail if it can't find the admins channel in the first 1000
+	// results or if Slack decides to return fewer results. To fix this you need
+	// to use the cursor to paginate through results.
+	params := api.GetConversationsParameters{
+		ExcludeArchived: "true",
+		Types:           []string{"private_channel"},
+		Limit:           1000,
+	}
+	grps, _, err := w.botClient.GetConversations(&params)
 	if err != nil {
 		return id, errors.Wrap(err, "unable to retrieve list of channels")
 	}

@@ -1,6 +1,9 @@
 GO111MODULE=on
 export GOOS GO111MODULE
 
+GOOS=linux
+export GOOS
+
 test:
 	go vet ./...
 	go fmt ./...
